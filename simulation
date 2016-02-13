@@ -1,0 +1,374 @@
+
+Conversation opened. 2 messages. All messages read.
+
+Skip to content
+Using Gmail with screen readers
+mohamed
+Search
+
+
+
+Take me to Inbox
+Gmail
+COMPOSE
+Labels
+Inbox
+Starred
+Important
+Sent Mail
+Drafts
+Unwanted
+More 
+  More 
+6 of 56  
+ 
+Collapse all Print all In new window
+Detection Project: Mohamed Seif
+Inbox
+x 
+
+Mohamed Seif <mohamed.sei60@gmail.com>
+Attachments4 Feb (9 days ago)
+
+to Amr 
+Dear Dr. Amr, 
+
+Kindly find the files attached.
+
+Best Regards,
+Mohamed
+
+3 Attachments 
+ 
+Preview attachment sensing_transmission_tradeoff.m
+
+Text
+sensing_transmission_tradeoff.m
+Preview attachment kim2015.pdf
+PDF
+kim2015.pdf
+Preview attachment sensing_tradeoff_report_seif.pdf
+
+PDF
+sensing_tradeoff_report_seif.pdf
+
+Amr El-Sherif
+4 Feb (9 days ago)
+
+to me 
+Received.
+Thank you.
+
+
+	
+Click here to Reply or Forward
+0.32 GB (2%) of 15 GB used
+Manage
+Terms - Privacy
+Last account activity: in 1 hour
+Details
+Amr El-Sherif
+amr.elsherif@gmail.com
+
+Show details
+Hangouts
+
+ 
+ 
+
+
+%--------------[Sensing vs Transmission]------------%
+close all
+clc
+clear all
+
+
+%% Figure 1:
+
+number_bits=16;
+bandwidth=0:0.02:10;
+bit_rate=10^4;
+noise_intensity=10^-5;
+channel_gain=10^-4;
+p_H0=0.8;
+sensing_power=zeros(1,length(bandwidth));
+transmission_power=zeros(1,length(bandwidth));
+for index_bandwidth=1:length(bandwidth)
+    sensing_power(index_bandwidth)=0.0028*number_bits*(2*bandwidth(index_bandwidth)*0.001*1e6)^1.0227;
+    
+    transmission_power(index_bandwidth)=(noise_intensity*1e6*bandwidth(index_bandwidth)*...
+        (2^(bit_rate/(p_H0*1e6*bandwidth(index_bandwidth)))-1))/channel_gain;
+end
+
+%Plot:
+
+plot(bandwidth,sensing_power/1e3,'b');
+hold on;
+plot(bandwidth,transmission_power/1e3,'r');
+legend('P_{S}','P_{T}');
+xlabel('Sensing Bandwidth B (MHz)');
+ylabel('Power Consumption (mW)');
+
+figure; %new figure
+%% Figure 2:
+
+for sensing_time=[10e-3 30e-3 50e-3]
+    number_bits=16;
+    bandwidth=0.1:0.01:5;
+    noise_intensity=10e-5;
+    channel_gain=10e-5;
+    total_time=100e-3;
+    transmission_time=total_time-sensing_time;
+    p_H0=0.8;
+    misdetection_prob=0.01;
+    primary_user_power=10e-6;
+    circuit_power=5e-6;
+    k=1;
+    transmission_power=5e-3;
+    energy_effiency=zeros(1,length(bandwidth));
+    sensing_power=zeros(1,length(bandwidth));
+    
+    for index_bandwidth=1:length(bandwidth)
+        
+        sensing_power=0.0028*number_bits*(2*bandwidth(index_bandwidth)*0.001*1e6)^1.0227*(1e-6);
+        
+        total_energy=circuit_power*total_time+...
+            sensing_power*sensing_time+...
+            (1+k)*transmission_power*transmission_time;
+        
+        bit_rate=p_H0*1e6*bandwidth(index_bandwidth)*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth))))+...
+            misdetection_prob*(1-p_H0)*1e6*bandwidth(index_bandwidth)*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth)+primary_user_power)));
+        
+        energy_effiency(index_bandwidth)=(bit_rate*transmission_time)/total_energy;
+    end
+    
+    %Plot:
+    plot(bandwidth,energy_effiency);
+    hold all
+end
+legend('T_{s} = 10 ms','T_{s} = 30 ms','T_{s} = 50 ms');
+xlabel('Sensing Bandwidth, B (MHz)')
+ylabel('Energy Efficiency, \eta (bits/Joule)')
+
+
+figure;
+
+%% Figure 3:
+
+for no_CR=[10 20 30]
+    for sensing_time= 17*(10^-3)
+        
+        number_bits=8;
+        noise_intensity=10^-11;
+        channel_gain=10^-4;
+        total_time=100*(10^-3);
+        transmission_time=total_time-sensing_time;
+        p_H0=0.8;
+        misdetection_prob=0.01;
+        primary_user_power=10*(10^-6);
+        circuit_power=5*(10^-6);
+        k=1;
+        transmission_power=5*(10^-3);
+        
+        
+        bandwidth=(0.2:0.01:4)*10^6;
+        energy_effiency=zeros(1,length(bandwidth));
+        
+        for index_bandwidth=1:length(bandwidth)
+            
+            E_CR=(10^(50/10))*noise_intensity; %per Hz
+            
+            
+            sensing_power=0.0028*number_bits*(2*bandwidth(index_bandwidth)*0.001)^1.0227*(10^-6);
+            
+            
+            
+            bit_rate=p_H0*bandwidth(index_bandwidth)*...
+                log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth))))+...
+                (misdetection_prob)*(1-p_H0)*bandwidth(index_bandwidth)*...
+                log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth)+primary_user_power)));
+            
+            total_energy=no_CR*circuit_power*total_time+no_CR*sensing_power*sensing_time+...
+                (1+k)*transmission_power*transmission_time+no_CR*(1+k)*E_CR;
+            
+            energy_effiency(index_bandwidth)=(bit_rate*transmission_time)/total_energy;
+        end
+        %Plot:
+        plot(bandwidth/(1e6),energy_effiency);
+        hold all
+    end
+    
+    
+end
+
+xlabel('Sensing Bandwidth, B (MHz)')
+ylabel('Energy Efficiency, \eta (bits/Joule)')
+legend('K=10','K=20','K=30')
+
+
+
+
+figure;
+
+%% Figure 4-a:
+
+
+
+for sensing_time= [10 *(10^-3) 20*(10^-3) 30*(10^-3)]
+    no_CR=1:0.01:40;
+    number_bits=8;
+    noise_intensity=10^-11;
+    channel_gain=10^-4;
+    total_time=100*(10^-3);
+    transmission_time=total_time-sensing_time;
+    p_H0=0.8;
+    misdetection_prob=0.01;
+    primary_user_power=10*(10^-6);
+    circuit_power=5*(10^-6);
+    k=1;
+    transmission_power=5*(10^-3);
+    
+    
+    bandwidth=1*10^6;
+    energy_effiency=zeros(1,length(no_CR));
+    
+    for index_CR=1:length(no_CR)
+        
+        E_CR=(10^(50/10))*noise_intensity; %per Hz
+        
+        
+        sensing_power=0.0028*number_bits*(2*bandwidth*0.001)^1.0227*(10^-6);
+        
+        
+        
+        bit_rate=p_H0*bandwidth*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth)))+...
+            (misdetection_prob)*(1-p_H0)*bandwidth*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth+primary_user_power)));
+        
+        total_energy=no_CR(index_CR)*circuit_power*total_time+no_CR(index_CR)*sensing_power*sensing_time+...
+            (1+k)*transmission_power*transmission_time+no_CR(index_CR)*(1+k)*E_CR;
+        
+        energy_effiency(index_CR)=(bit_rate*transmission_time)/total_energy;
+    end
+    %Plot:
+    plot(no_CR,energy_effiency);
+    hold all
+end
+
+xlabel('Number of CRs, K ')
+ylabel('Energy Efficiency, \eta (bits/Joule)')
+legend('T_{s} = 10 ms','T_{s} = 30 ms','T_{s} = 50 ms');
+
+
+
+figure;
+%% Figure 4-b:
+
+
+
+for sensing_time= [10 *(10^-3) 20*(10^-3) 30*(10^-3)]
+    no_CR=10;
+    number_bits=8;
+    noise_intensity=10^-11;
+    channel_gain=10^-4;
+    total_time=100*(10^-3);
+    transmission_time=total_time-sensing_time;
+    p_H0=0.8;
+    misdetection_prob=0.01;
+    primary_user_power=10*(10^-6);
+    circuit_power=5*(10^-6);
+    k=1;
+    transmission_power=5*(10^-3);
+    
+    
+    bandwidth=(0.3:0.01:4)*10^6;
+    energy_effiency=zeros(1,length(no_CR));
+    
+    for index_bandwidth=1:length(bandwidth)
+        
+        E_CR=(10^(50/10))*noise_intensity; %per Hz
+        
+        
+        sensing_power=0.0028*number_bits*(2*bandwidth(index_bandwidth)*0.001)^1.0227*(10^-6);
+        
+        
+        
+        bit_rate=p_H0*bandwidth(index_bandwidth)*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth))))+...
+            (misdetection_prob)*(1-p_H0)*bandwidth(index_bandwidth)*...
+            log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth(index_bandwidth)+primary_user_power)));
+        
+        total_energy=no_CR*circuit_power*total_time+no_CR*sensing_power*sensing_time+...
+            (1+k)*transmission_power*transmission_time+no_CR*(1+k)*E_CR;
+        
+        energy_effiency(index_bandwidth)=(bit_rate*transmission_time)/total_energy;
+    end
+    %Plot:
+    plot(bandwidth*1e-6,energy_effiency);
+    hold all
+end
+
+xlabel('Sensing Bandwidth, B (MHz)')
+ylabel('Energy Efficiency, \eta (bits/Joule)')
+legend('T_{s} = 10 ms','T_{s} = 20 ms','T_{s} = 30 ms');
+
+
+
+
+
+figure;
+%% Figure 5:
+
+
+for p_H0=[0.9 0.8 0.7];
+    for sensing_time= 10 *(10^-3)
+        no_CR=1:1e-3:40;
+        number_bits=16;
+        noise_intensity=10^-11;
+        channel_gain=10^-4;
+        total_time=100*(10^-3);
+        transmission_time=total_time-sensing_time;
+        misdetection_prob=0.01;
+        primary_user_power=10*(10^-6);
+        circuit_power=5*(10^-6);
+        k=1;
+        transmission_power=5*(10^-3);
+        
+        
+        bandwidth=1*10^6;
+        energy_effiency=zeros(1,length(no_CR));
+        
+        for index_CR=1:length(no_CR)
+            
+            E_CR=(10^(42/10))*noise_intensity; %per Hz
+            
+            
+            sensing_power=0.0028*number_bits*(2*bandwidth*0.001)^1.0227*(10^-6);
+            
+            
+            
+            bit_rate=p_H0*bandwidth*...
+                log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth)))+...
+                (misdetection_prob)*(1-p_H0)*no_CR(index_CR)*bandwidth*...
+                log2(1+((channel_gain*transmission_power)/(noise_intensity*bandwidth+primary_user_power)));
+            
+            total_energy=no_CR(index_CR)*circuit_power*total_time+no_CR(index_CR)*sensing_power*sensing_time+...
+                (1+k)*transmission_power*transmission_time+no_CR(index_CR)*(1+k)*E_CR;
+            
+            energy_effiency(index_CR)=(bit_rate*transmission_time)/total_energy;
+        end
+        %Plot:
+        plot(no_CR,energy_effiency);
+        hold all
+    end
+end
+xlabel('Number of CRs, K ')
+ylabel('Energy Efficiency, \eta (bits/Joule)')
+legend('P(H_{1})=0.1','P(H_{1})=0.2','P(H_{1})=0.3')
+sensing_transmission_tradeoff.m
+Open with
+1 of 3 items
+sensing_transmission_tradeoff.mkim2015.pdfsensing_tradeoff_report_seif.pdf
